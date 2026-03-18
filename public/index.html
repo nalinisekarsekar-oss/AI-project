@@ -1,0 +1,632 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Tracker</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --bg: #f8fafc;
+            --text: #1e293b;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        /* Dashboard Layout */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .card-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .card-value {
+            font-size: 2.25rem;
+            font-weight: 800;
+            margin: 0;
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            background: #e2e8f0;
+            padding: 0.25rem;
+            border-radius: 0.75rem;
+            margin-bottom: 2rem;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 0.75rem;
+            border: none;
+            background: transparent;
+            font-weight: 600;
+            color: #64748b;
+            cursor: pointer;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .nav-tab.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-tab.active.income { color: var(--success); }
+        .nav-tab.active.outcome { color: var(--danger); }
+        .nav-tab.active.borrow { color: var(--warning); }
+
+        .add-section {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .btn-add-main {
+            width: 100%;
+            background-color: var(--primary);
+            padding: 1.25rem;
+            font-size: 1.125rem;
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+            border-radius: 0.75rem;
+        }
+
+        .btn-add-main:hover {
+            opacity: 0.9;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            color: white;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn-income { background-color: var(--success); }
+        .btn-outcome { background-color: var(--danger); }
+        .btn-borrow { background-color: var(--warning); }
+
+        /* Table Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+        }
+
+        .modal {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .modal-header {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--text);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 0.625rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.375rem;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn-cancel {
+            background: #e2e8f0;
+            color: var(--text);
+        }
+
+        .btn-submit {
+            background: var(--primary);
+        }
+
+        /* Entry List Styles */
+        .entry-list {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .entry-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .entry-item:last-child {
+            border-bottom: none;
+        }
+
+        .entry-info h4 {
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        .entry-info p {
+            margin: 0.25rem 0 0;
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .entry-amount {
+            font-weight: 700;
+        }
+
+        .type-tag {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-right: 0.5rem;
+        }
+
+        /* Table Styles */
+        .entry-table-container {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            background: white;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 1rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        th {
+            background-color: #f8fafc;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+
+        tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .amount-cell {
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .btn-update {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+        }
+
+        .btn-update:hover { opacity: 0.8; }
+
+        .update-form {
+            display: none;
+            gap: 0.25rem;
+            align-items: center;
+        }
+
+        .update-form.active {
+            display: flex;
+        }
+
+        .update-input {
+            width: 80px !important;
+            padding: 0.25rem !important;
+            font-size: 0.875rem !important;
+        }
+
+        .date-cell {
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+        .tag-income { background: #dcfce7; color: #166534; }
+        .tag-outcome { background: #fee2e2; color: #991b1b; }
+        .tag-borrow { background: #fef3c7; color: #92400e; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Finance Tracker</h1>
+            <p>Manage your transactions seamlessly</p>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="nav-tabs">
+            <button class="nav-tab active income" onclick="switchTab('income')">Income</button>
+            <button class="nav-tab outcome" onclick="switchTab('outcome')">Outcome</button>
+            <button class="nav-tab borrow" onclick="switchTab('borrow')">Borrow</button>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Total Outcome Card -->
+            <div class="card">
+                <span class="card-title">Total Outcome</span>
+                <div id="totalOutcome" class="card-value" style="color: var(--danger);">$0.00</div>
+            </div>
+
+            <!-- Available Cash Card -->
+            <div class="card">
+                <span class="card-title">Available Cash</span>
+                <div id="availableCash" class="card-value" style="color: var(--success);">$0.00</div>
+            </div>
+
+            <!-- Still to be Returned Card -->
+            <div class="card">
+                <span class="card-title">Still to be Returned</span>
+                <div id="stillToReturn" class="card-value" style="color: var(--warning);">$0.00</div>
+            </div>
+        </div>
+
+        <!-- Dynamic Add Button -->
+        <div class="add-section">
+            <button id="addBtn" class="btn btn-add-main" onclick="openModal('income')">
+                <span style="font-size: 1.5rem; margin-right: 0.5rem;">+</span> Add Income Entry
+            </button>
+        </div>
+
+        <div class="entry-list">
+            <h3 id="tableTitle">Recent Income Entries</h3>
+            <div id="entries-container" class="entry-table-container">
+                <p style="text-align: center; color: #64748b;">Loading entries...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Overlay -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <div class="modal-header" id="modalTitle">New Entry</div>
+            <form id="entryForm">
+                <input type="hidden" id="entryType" name="type">
+                <div class="form-group">
+                    <label for="name">Name / Title</label>
+                    <input type="text" id="name" name="name" placeholder="e.g., Salary, Rent, Loan" required>
+                </div>
+                <div class="form-group">
+                    <label for="amount">Amount</label>
+                    <input type="number" id="amount" name="amount" placeholder="0.00" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" rows="3" placeholder="Add more details..."></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-submit">Save Entry</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const modalOverlay = document.getElementById('modalOverlay');
+        const entryForm = document.getElementById('entryForm');
+        const modalTitle = document.getElementById('modalTitle');
+        const entryTypeInput = document.getElementById('entryType');
+        const entriesContainer = document.getElementById('entries-container');
+        const totalOutcomeDisplay = document.getElementById('totalOutcome');
+        const availableCashDisplay = document.getElementById('availableCash');
+        const stillToReturnDisplay = document.getElementById('stillToReturn');
+        const addBtn = document.getElementById('addBtn');
+        const tableTitle = document.getElementById('tableTitle');
+
+        let allEntries = [];
+        let currentTab = 'income';
+
+        function switchTab(type) {
+            currentTab = type;
+            
+            // Update UI for Tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.innerText.toLowerCase() === type) tab.classList.add('active');
+            });
+
+            // Update Label and Button
+            const title = type.charAt(0).toUpperCase() + type.slice(1);
+            addBtn.innerText = `+ Add ${title} Entry`;
+            addBtn.setAttribute('onclick', `openModal('${type}')`);
+            tableTitle.innerText = `Recent ${title} Entries`;
+
+            updateDashboard();
+            renderTable();
+        }
+
+        function updateDashboard() {
+            let income = 0;
+            let outcome = 0;
+            let borrowTotal = 0;
+            let borrowReturned = 0;
+
+            allEntries.forEach(entry => {
+                const amount = parseFloat(entry.amount);
+                const returned = parseFloat(entry.returnedAmount || 0);
+                
+                if (entry.type === 'income') income += amount;
+                else if (entry.type === 'outcome') outcome += amount;
+                else if (entry.type === 'borrow') {
+                    borrowTotal += amount;
+                    borrowReturned += returned;
+                }
+            });
+
+            // 1. Total Outcome
+            totalOutcomeDisplay.innerText = `$${outcome.toLocaleString()}`;
+
+            // 2. Available Cash (Income + (Borrowed - Returned) - Outcome)
+            const availableCash = (income + (borrowTotal - borrowReturned)) - outcome;
+            availableCashDisplay.innerText = `$${availableCash.toLocaleString()}`;
+            availableCashDisplay.style.color = availableCash >= 0 ? 'var(--success)' : 'var(--danger)';
+
+            // 3. Still to be Returned (Borrow Total - Borrow Returned)
+            const stillToReturn = borrowTotal - borrowReturned;
+            stillToReturnDisplay.innerText = `$${stillToReturn.toLocaleString()}`;
+        }
+
+        function renderTable() {
+            const filteredEntries = allEntries.filter(entry => entry.type === currentTab);
+
+            if (filteredEntries.length === 0) {
+                entriesContainer.innerHTML = `<p style="text-align: center; color: #64748b;">No ${currentTab} entries found yet.</p>`;
+                return;
+            }
+
+            let tableHtml = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Name</th>
+                            ${currentTab === 'borrow' ? '<th>Borrowed</th><th>Returned</th><th>Remaining</th><th>Action</th>' : '<th>Description</th><th>Amount</th>'}
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            filteredEntries.forEach(entry => {
+                const date = new Date(entry.date).toLocaleDateString();
+                const amount = parseFloat(entry.amount);
+                const returned = parseFloat(entry.returnedAmount || 0);
+                const balance = amount - returned;
+                const amountColor = entry.type === 'income' ? 'var(--success)' : entry.type === 'outcome' ? 'var(--danger)' : 'var(--warning)';
+                
+                if (currentTab === 'borrow') {
+                    tableHtml += `
+                        <tr>
+                            <td class="date-cell">${date}</td>
+                            <td><strong>${entry.name}</strong></td>
+                            <td class="amount-cell">$${amount.toLocaleString()}</td>
+                            <td class="amount-cell" style="color: var(--success)">$${returned.toLocaleString()}</td>
+                            <td class="amount-cell" style="color: ${balance > 0 ? 'var(--danger)' : 'var(--success)'}">$${balance.toLocaleString()}</td>
+                            <td>
+                                <button id="btn-show-${entry._id}" class="btn-update" onclick="toggleReturnForm('${entry._id}')">Return Money</button>
+                                <div id="form-${entry._id}" class="update-form">
+                                    <input type="number" id="input-${entry._id}" class="update-input" placeholder="Amount">
+                                    <button class="btn-update" onclick="updateReturn('${entry._id}')">Save</button>
+                                    <button class="btn-update btn-cancel" style="background: #cbd5e1" onclick="toggleReturnForm('${entry._id}')">X</button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    const prefix = entry.type === 'income' ? '+' : '-';
+                    tableHtml += `
+                        <tr>
+                            <td class="date-cell">${date}</td>
+                            <td><strong>${entry.name}</strong></td>
+                            <td>${entry.description || '<span style="color: #cbd5e1;">-</span>'}</td>
+                            <td class="amount-cell" style="color: ${amountColor}">
+                                ${prefix} $${amount.toLocaleString()}
+                            </td>
+                        </tr>
+                    `;
+                }
+            });
+
+            tableHtml += `</tbody></table>`;
+            entriesContainer.innerHTML = tableHtml;
+        }
+
+        function toggleReturnForm(id) {
+            const form = document.getElementById(`form-${id}`);
+            const btn = document.getElementById(`btn-show-${id}`);
+            
+            if (form.classList.contains('active')) {
+                form.classList.remove('active');
+                btn.style.display = 'inline-block';
+            } else {
+                form.classList.add('active');
+                btn.style.display = 'none';
+            }
+        }
+
+        async function updateReturn(id) {
+            const input = document.getElementById(`input-${id}`);
+            const amount = parseFloat(input.value);
+
+            if (isNaN(amount) || amount <= 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/entries/${id}/return`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ returnedAmount: amount })
+                });
+
+                if (response.ok) {
+                    fetchEntries();
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + error.error);
+                }
+            } catch (err) {
+                console.error('Error updating return:', err);
+                alert('Connection error');
+            }
+        }
+
+        function openModal(type) {
+            entryTypeInput.value = type;
+            modalTitle.innerText = `New ${type.charAt(0).toUpperCase() + type.slice(1)} Entry`;
+            modalOverlay.style.display = 'flex';
+        }
+
+        function closeModal() {
+            modalOverlay.style.display = 'none';
+            entryForm.reset();
+        }
+
+        // Close modal if clicking outside
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) closeModal();
+        });
+
+        async function fetchEntries() {
+            try {
+                const response = await fetch('/api/entries');
+                allEntries = await response.json();
+                switchTab(currentTab);
+            } catch (err) {
+                console.error('Error:', err);
+                entriesContainer.innerHTML = '<p style="text-align: center; color: var(--danger);">Error loading entries.</p>';
+            }
+        }
+
+        entryForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(entryForm);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch('/api/entries', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    closeModal();
+                    fetchEntries();
+                } else {
+                    alert('Error saving entry');
+                }
+            } catch (err) {
+                console.error('Error:', err);
+                alert('Connection error');
+            }
+        };
+
+        window.onload = fetchEntries;
+    </script>
+</body>
+</html>
